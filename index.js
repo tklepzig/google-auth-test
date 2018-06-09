@@ -50,7 +50,7 @@ passport.use(new GoogleStrategy(
         callbackURL: authRedirectUri,
         proxy: true // necessary for https redirect on Azure
     },
-    (accessToken, refreshToken, profile, cb) => cb(undefined, profile)
+    (accessToken, refreshToken, profile, done) => done(null, profile)
 ));
 
 // force https in production
@@ -81,15 +81,73 @@ app.use((req, res, next) => {
 //     res.redirect('/');
 // });
 
-app.get('/login', passport.authenticate('google', {
-    scope: ["profile"]
-}));
-
-app.get(authRedirectUri,
-    passport.authenticate('google', {
-        successRedirect: '/',
-        failureRedirect: '/login'
+app.get('/login', passport.authenticate('google',
+    {
+        scope: [
+            "https://www.googleapis.com/auth/plus.profile.emails.read",
+            "https://www.googleapis.com/auth/plus.login"
+        ]
     }));
+
+// see https://stackoverflow.com/a/13734798
+var authenticate = (req, success, failure) => {
+
+    // Use the Google strategy with passport.js, but with a custom callback.
+    // passport.authenticate returns Connect middleware that we will use below.
+    //
+    // For reference: http://passportjs.org/guide/authenticate/
+    return passport.authenticate('google',
+        // This is the 'custom callback' part
+        (err, user, info) => {
+
+            if (err) {
+                failure(err);
+            }
+            else if (!user) {
+                failure("Invalid login data");
+            }
+            else {
+                // Here, you can do what you want to control 
+                // access. For example, you asked to deny users 
+                // with a specific email address:
+                if (user.emails[0].value !== "no@emails.com") {
+                    failure("User not allowed");
+                }
+                else {
+                    // req.login is added by the passport.initialize() 
+                    // middleware to manage login state. We need 
+                    // to call it directly, as we're overriding
+                    // the default passport behavior.
+                    req.login(user, (err) => {
+                        if (err) {
+                            failure(err);
+                        }
+                        success();
+                    });
+                }
+            }
+        }
+    );
+};
+
+var authMiddleware = (req, res, next) => {
+
+    var success = () => {
+        res.redirect("/");
+    };
+
+    var failure = (error) => {
+        console.log(error);
+        res.status(401).send("Access Denied");
+
+    };
+
+    var middleware = authenticate(req, success, failure);
+    middleware(req, res, next);
+};
+
+
+app.get(authRedirectUri, authMiddleware);
 
 app.get("/*", ensureAuthenticated, (req, res) => {
     res.send(`<img src='${req.user.photos[0].value}' />`);
