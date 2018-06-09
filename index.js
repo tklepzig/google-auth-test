@@ -49,7 +49,8 @@ passport.use(new GoogleStrategy(
     {
         clientID: config.clientId,
         clientSecret: config.clientSecret,
-        callbackURL: authRedirectUri
+        callbackURL: authRedirectUri,
+        proxy: true
     },
     (accessToken, refreshToken, profile, cb) => cb(undefined, profile)
 ));
@@ -61,12 +62,12 @@ passport.use(new GoogleStrategy(
 // });
 
 // force https in production
-app.use((req, res, next) => {
-    if (config.isProd && req.protocol === 'http') {
-        return res.redirect('https://' + req.headers.host + req.url);
-    }
-    next();
-});
+// app.use((req, res, next) => {
+//     if (config.isProd && req.protocol === 'http') {
+//         return res.redirect('https://' + req.headers.host + req.url);
+//     }
+//     next();
+// });
 
 app.get('/login', passport.authenticate('google', {
     scope: ["profile"]
