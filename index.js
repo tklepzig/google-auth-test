@@ -10,7 +10,6 @@ const nconf = require("nconf");
 const app = express();
 const httpServer = http.createServer(app);
 
-
 nconf.file({ file: 'config.json' }).env();
 const config = {
     isProd: !!nconf.get("isProd"),
@@ -21,7 +20,6 @@ const config = {
     repoUrl: nconf.get("repoUrl"),
     repoUser: nconf.get("repoUser"),
     repoPassword: nconf.get("repoPassword")
-
 };
 
 const authRedirectUri = "/auth/google/callback";
@@ -50,7 +48,7 @@ passport.use(new GoogleStrategy(
         clientID: config.clientId,
         clientSecret: config.clientSecret,
         callbackURL: authRedirectUri,
-        proxy: true
+        proxy: true // necessary for https redirect on Azure
     },
     (accessToken, refreshToken, profile, cb) => cb(undefined, profile)
 ));
@@ -61,13 +59,21 @@ passport.use(new GoogleStrategy(
 //     res.redirect('/');
 // });
 
-// force https in production
-// app.use((req, res, next) => {
-//     if (config.isProd && req.protocol === 'http') {
-//         return res.redirect('https://' + req.headers.host + req.url);
-//     }
-//     next();
-// });
+
+/* Azure and secure cookies: see http://scottksmith.com/blog/2014/08/22/using-secure-cookies-in-node-on-azure/ */
+/*---------------------------------------------------------_*/
+// Tell express that we're running behind a reverse proxy that supplies https for you
+app.set('trust proxy', 1);
+
+//Add middleware that will trick express into thinking the request is secure
+app.use((req, res, next) => {
+    if (req.headers['x-arr-ssl'] && !req.headers['x-forwarded-proto']) {
+        req.headers['x-forwarded-proto'] = 'https';
+    }
+    return next();
+});
+/*---------------------------------------------------------_*/
+
 
 app.get('/login', passport.authenticate('google', {
     scope: ["profile"]
