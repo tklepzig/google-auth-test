@@ -53,12 +53,13 @@ passport.use(new GoogleStrategy(
     (accessToken, refreshToken, profile, cb) => cb(undefined, profile)
 ));
 
-// not senseful for sketchbook
-// app.get('/logout', function (req, res) {
-//     req.logout();
-//     res.redirect('/');
-// });
-
+// force https in production
+app.use((req, res, next) => {
+    if (config.isProd && req.protocol === 'http') {
+        return res.redirect('https://' + req.headers.host + req.url);
+    }
+    next();
+});
 
 /* Azure and secure cookies: see http://scottksmith.com/blog/2014/08/22/using-secure-cookies-in-node-on-azure/ */
 /*---------------------------------------------------------_*/
@@ -74,6 +75,11 @@ app.use((req, res, next) => {
 });
 /*---------------------------------------------------------_*/
 
+// not senseful for sketchbook cuase there is no login page and no anonymous content available
+// app.get('/logout', function (req, res) {
+//     req.logout();
+//     res.redirect('/');
+// });
 
 app.get('/login', passport.authenticate('google', {
     scope: ["profile"]
