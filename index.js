@@ -13,7 +13,7 @@ const httpServer = http.createServer(app);
 
 nconf.file({ file: 'config.json' }).env();
 const config = {
-    isProd: nconf.get("isProd"),
+    isProd: !!nconf.get("isProd"),
     port: nconf.get("PORT"),
     sessionSecret: nconf.get("sessionSecret"),
     clientId: nconf.get("clientId"),
