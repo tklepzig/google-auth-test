@@ -1,0 +1,43 @@
+{
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "PORT": {
+            "$id": "/properties/PORT",
+            "type": "integer",
+            "default": 80
+        },
+        "sessionSecret": {
+            "$id": "/properties/sessionSecret",
+            "type": "string",
+            "default": ""
+        },
+        "clientId": {
+            "$id": "/properties/clientId",
+            "type": "string",
+            "default": ""
+        },
+        "clientSecret": {
+            "$id": "/properties/clientSecret",
+            "type": "string",
+            "default": ""
+        },
+        "repoUrl": {
+            "$id": "/properties/repoUrl",
+            "type": "string",
+            "default": ""
+        },
+        "repoUser": {
+            "$id": "/properties/repoUser",
+            "type": "string",
+            "default": ""
+        },
+        "repoPassword": {
+            "$id": "/properties/repoPassword",
+            "type": "string",
+            "default": ""
+        }
+    }
+}
